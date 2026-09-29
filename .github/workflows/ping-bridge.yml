@@ -54,6 +54,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+<<<<<<< HEAD
           if [ -z "$DISCORD_WEBHOOK_URL" ]; then
             echo "DISCORD_WEBHOOK_URL secret not set - skipping Discord dispatch (Muse still picks this up on its 30-min poll)."
             exit 0
@@ -62,3 +63,9 @@ jobs:
           curl -s -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg content "$MSG" '{content:$content}')" || true
+=======
+          echo "Dispatching Discord alert..."
+          curl -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"content": "🔔 **Muse-Hermes Bridge Alert:** Hermes completed a task! Output posted to `muse-inbox/`."}' || true
+>>>>>>> c1ceeef (feat(ci): Wire live DISCORD_WEBHOOK_URL dispatch in GitHub Action)
