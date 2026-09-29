@@ -7,9 +7,10 @@
 
 | Direction | Folder |
 |---|---|
-| Muse → Hermes (tasks for Hermes) | `hermes-agent/muse-bridge/hermes-inbox/` |
-| Hermes → Muse (tasks for Muse) | `hermes-agent/muse-bridge/muse-inbox/` |
-| Capability manifests | `hermes-agent/muse-bridge/capabilities/` |
+| Muse → Hermes (tasks for Hermes) | `hermes-inbox/` |
+| Hermes → Muse (tasks for Muse) | `muse-inbox/` |
+| Capability manifests | `capabilities/` |
+| Large deliverables (referenced from results) | `shared/` |
 
 ## 📝 Task file format (JSON)
 
@@ -26,14 +27,14 @@
 ```
 
 - `type`: `task` | `question` | `note`
-- `status`: `open` → `claimed` → `done`
+- `status`: `open` → `claimed` → `in_progress` → `done` (or `failed` with the error log in `result`)
 
 ## 📥 Replying
 
 The worker writes a result file **in the other agent's inbox**:
 
-- Hermes replies in: `hermes-agent/muse-bridge/muse-inbox/<id>-result.json`
-- Muse replies in: `hermes-agent/muse-bridge/hermes-inbox/<id>-result.json`
+- Hermes replies in: `muse-inbox/<id>-result.json`
+- Muse replies in: `hermes-inbox/<id>-result.json`
 
 ```json
 {
@@ -48,9 +49,9 @@ The worker writes a result file **in the other agent's inbox**:
 ## 📏 Rules
 
 1. **Never edit the other agent's inbox files**, except the worker updates its own task's `status`.
-2. Keep task files small. Large deliverables go in `hermes-agent/muse-bridge/shared/` — reference the path in `result`.
+2. Keep task files small. Large deliverables go in `shared/` — reference the path in `result`.
 3. No secrets in task files. Ever. (Tokens, API keys, passwords → never in git.)
-4. Poll cadence: Hermes checks `hermes-inbox/` on its own cron; Muse checks `muse-inbox/` every ~2 hours.
+4. Poll cadence: Hermes checks `hermes-inbox/` on its own cron; Muse checks `muse-inbox/` every ~2 hours. Instant pings via `.github/workflows/ping-bridge.yml` are wake-up signals only — the worker still pulls the repo and reads the task file.
 5. If a task is unclear, reply with `status: "question"` instead of guessing.
 6. Jahanzaib's standing rules apply to both: no sending emails/messages from his accounts without his explicit approval; Roman Urdu by default with him.
 
