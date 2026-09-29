@@ -19,23 +19,46 @@ jobs:
           CHANGED=$(git diff --name-only HEAD~1 HEAD || true)
           echo "Changed files:"
           echo "$CHANGED"
-          
-          if echo "$CHANGED" | grep -q "^hermes-inbox/"; then
+
+          HERMES_FILES=$(echo "$CHANGED" | grep "^hermes-inbox/" || true)
+          MUSE_FILES=$(echo "$CHANGED" | grep "^muse-inbox/" || true)
+
+          if [ -n "$HERMES_FILES" ]; then
             echo "hermes_task=true" >> $GITHUB_OUTPUT
+            {
+              echo "hermes_files<<EOF"
+              echo "$HERMES_FILES"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
           fi
-          if echo "$CHANGED" | grep -q "^muse-inbox/"; then
+          if [ -n "$MUSE_FILES" ]; then
             echo "muse_task=true" >> $GITHUB_OUTPUT
+            {
+              echo "muse_files<<EOF"
+              echo "$MUSE_FILES"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
           fi
 
       - name: Ping Hermes via n8n Webhook
         if: steps.files.outputs.hermes_task == 'true'
         run: |
-          echo "Triggering Hermes VPS webhook..."
-          curl -X POST https://n8n.aijahan.cloud/webhook/muse-hermes-bridge \
+          FILES_JSON=$(printf '%s' "${{ steps.files.outputs.hermes_files }}" | jq -R . | jq -s .)
+          echo "Triggering Hermes VPS webhook for: ${{ steps.files.outputs.hermes_files }}"
+          curl -s -X POST https://n8n.aijahan.cloud/webhook/muse-hermes-bridge \
             -H "Content-Type: application/json" \
-            -d '{"event": "new_hermes_task", "source": "github_action"}' || true
+            -d "$(jq -n --argjson files "$FILES_JSON" '{event:"new_hermes_task", source:"github_action", files:$files}')" || true
 
-      - name: Dispatch Discord Notification
+      - name: Notify Discord (Hermes -> Muse)
         if: steps.files.outputs.muse_task == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          echo "Muse Inbox updated. Task response ready."
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not set - skipping Discord dispatch (Muse still picks this up on its 30-min poll)."
+            exit 0
+          fi
+          MSG=$(printf 'Hermes -> Muse: naye results muse-inbox/ me push hue hain:\n%s' "${{ steps.files.outputs.muse_files }}")
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg content "$MSG" '{content:$content}')" || true
