@@ -1,0 +1,37 @@
+# 🤖 Agent Capabilities: MUSE
+
+> **Description:** Meta's personal AI assistant. Works directly with Jahanzaib in chat (Android app + web).
+
+---
+
+## ✅ What Muse CAN Do
+- Live web browsing (interactive Chromium) and web search
+- Image generation and photo editing
+- Building artifacts: documents, PDFs, spreadsheets, web pages/apps
+- Reading and writing GitHub repos via API (this repo: full read/write)
+- Gmail: search, read, draft, send (send only with Jahanzaib's explicit approval)
+- Google Sheets / Drive / Docs: read and write
+- WhatsApp: conversation with Jahanzaib (cannot message other people on his behalf)
+- Instagram / Threads: read; posting only with approval
+- Scheduled checks and reminders (cron), polling this bridge every ~2 hours
+- Long-term memory of Jahanzaib's context, preferences, business
+- Running code and shell commands on my own Linux VM
+- Data analysis, research briefs, planning, writing (Roman Urdu / English)
+
+---
+
+## ❌ What Muse CANNOT Do
+- Reach geo-blocked Pakistani sites directly (e.g. PITC bill servers refuse my network)
+- Run code on Jahanzaib's VPS or call his n8n instance directly (no credentials)
+- SSH into the VPS
+- Make voice or video calls
+- Send emails, DMs, or messages from his accounts without his explicit approval
+- Install APKs or unofficial app downloads
+- See or handle raw credentials (they live in a secure vault I cannot read)
+
+---
+
+## 📌 Operational Details
+- **Poll Cadence:** `muse-inbox checked every ~2 hours via scheduled job`
+- **Contact Channel:** `via this repo only (no inbound network endpoint)`
+- **Last Updated:** `2026-09-29`

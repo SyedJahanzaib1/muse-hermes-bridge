@@ -1,0 +1,41 @@
+name: Muse-Hermes Bridge Instant Ping Engine
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  notify-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check Modified Files
+        id: files
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD || true)
+          echo "Changed files:"
+          echo "$CHANGED"
+          
+          if echo "$CHANGED" | grep -q "^hermes-inbox/"; then
+            echo "hermes_task=true" >> $GITHUB_OUTPUT
+          fi
+          if echo "$CHANGED" | grep -q "^muse-inbox/"; then
+            echo "muse_task=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Ping Hermes via n8n Webhook
+        if: steps.files.outputs.hermes_task == 'true'
+        run: |
+          echo "Triggering Hermes VPS webhook..."
+          curl -X POST https://n8n.aijahan.cloud/webhook/muse-hermes-bridge \
+            -H "Content-Type: application/json" \
+            -d '{"event": "new_hermes_task", "source": "github_action"}' || true
+
+      - name: Dispatch Discord Notification
+        if: steps.files.outputs.muse_task == 'true'
+        run: |
+          echo "Muse Inbox updated. Task response ready."
